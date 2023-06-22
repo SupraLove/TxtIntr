@@ -1,50 +1,86 @@
-#include <iostream>
-#include <getopt.h>
 
+#include <iostream>
+#include <unistd.h>
+#include <stdlib.h>
+#include <cstdlib>
+#include <vector>
 using namespace std;
 
-int main(int argc, char *argv[])
+class Opts{
+private:
+    bool Add = false;
+    bool Sub = false;
+    const int maxPar = 5;
+    const int minPar = 2;
+    int Params = 0;
+    double result{};
+    string Operation;
+    vector<double> digits;
+
+public:
+    Opts(int argc, char **argv);
+    void count();
+    void usage(const char* progName);
+};
+
+void Opts::usage(const char* progName)
 {
+ std::cout<<"Usage: "<<progName<<" -o summa^raznost <double> param1 param2 param3 [param4] [param5]\n";
+ exit(1);
+}
 
-	{ if (argc==1)
-    {
-        cout<<"КАЛЬКУЛЯТОР"<< endl<< "Чтобы выбрать действие, нужно ввести один из параметров:" << endl<< "-s — cложение всех введенных значений" << endl << "-m — вычетание первого значения из всех последующий введенных значений"<< endl << "Для того чтобы продолжить запустите программу еще раз с нужным параметром и введите значения через пробел"<< endl;
-    }        
-
-	int opt, i, result = 0, x, b ,t;
-	while ((opt = getopt (argc, argv, "m:s:")) != -1)
-        {
-            switch (opt)
-            {
-                case 's':
-        			for(i = 0; i<argc; i++)
-        			{
-            				cout<< i << ": "<< argv[i] << endl;
-        			}			
-        			for(i=2; i<argc; i++)
-        			{
-            			x = strtol(argv[i], NULL, 10);
-            			result=result + x;
-        			}
-        		cout<< "Результат: "<< result<<endl;
-               	break;
-               	
-               	case 'm':
-    				for(i = 0; i<argc; i++)
-   			 		{
-        				cout<< i << ": "<< argv[i] << endl;
-    				}	
-    				b = 0;
-    				for(i=2; i<argc; i++)
-    				{
-       					x = strtol(argv[i], NULL, 10);
-          				t = strtol(argv[2], NULL, 10);
-        				result=result + x;
-        				b=result - t*2;
-    				}
-    			cout<< "Результат: "<< b <<endl;
-                break;       
+Opts::Opts(int argc, char **argv)
+{
+    int opt;
+    opt = getopt(argc, argv, "o:");
+    switch (opt) {
+        case 'o': // Операция
+            Operation = optarg;
+            if (Operation == "summa") {
+                Add = true;}
+            else if (Operation == "raznost"){
+                Sub = true;}
+            else {
+                // если ошибка - сообщить и завершить
+                usage(argv[0]);
             }
+            break;
+        case '?': // неверный параметр
+        case ':': // нет значения у параметра
+            usage(argv[0]); // сообщить и завершить
+    }
+    if ((Add == true) || (Sub == true)){
+        for(; optind < argc; optind++){
+            if (Params < maxPar){
+                double d = strtod(argv[optind],nullptr);
+                digits.push_back(d);
+                Params +=1;
+            } 
         }
     }
+    if (Params<minPar){
+        cout <<"Недостаточно операндов" <<endl;
+        usage(argv[0]);}
 }
+
+void Opts::count(){
+    result = digits[0];
+    if (Add){
+        for (int i = 1; i < digits.size(); i++){
+            result += digits[i];
+        }
+    }
+    else if(Sub){
+        for (int i = 1; i < digits.size(); i++){
+           result -= digits[i];
+        }
+    }
+    cout<<result<<endl;
+}
+
+int main(int argc, char **argv)
+{
+    Opts op(argc, argv);
+    op.count();
+    return 0;
+} 
